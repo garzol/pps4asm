@@ -12,11 +12,13 @@ from ply import yacc
     
 import asmlex
     
+from pps4codes import PPS4Inst
     
     
 class MyParser:
     def __init__(self):
         self.comment = u""
+        self.address = 0
 
     def p_program(self, p):
         '''program : program statement
@@ -35,12 +37,24 @@ class MyParser:
 
 
 
-
-    def p_statement_AD(self, p):
-        '''statement  :    AD NEWLINE
-                        '''
-        print("AD command", p[1])
-
+    def p_full_code(self, p):
+        '''
+        fcode :   AD
+                | ADC
+                | ADSK
+                | ADCSK
+                | DC
+                | AND
+        '''
+        p[0] = p[1]
+        
+        
+    def p_statement_fcode(self, p):
+        '''statement  :    fcode NEWLINE
+        '''
+        
+        print("full code", self.address, PPS4Inst.full_code[p[1]])
+        self.address += 1
        
     def p_statement_comment(self, p):
         'statement : COMMENT'
@@ -56,6 +70,9 @@ class MyParser:
     #     print("ldi number", p[1], p[2])
     #
 
+    def p_statement_blank(self, p):
+        '''statement :  NEWLINE'''
+        #p[0] = (0, ('BLANK', int(p[1])))
 
     # Error rule for syntax errors
     def p_error(self, p):

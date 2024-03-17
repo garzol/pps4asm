@@ -11,71 +11,23 @@ Copyright AA55 Consulting 2024
 import re
 from ply import lex
 
+from pps4codes import PPS4Inst
+
 # List of token names.   This is always required
 
 class MyLexer:  
 
  
     
-    opcodes0 = (     
-                    'ADC',
-                    'ADSK',
-                    'ADCSK',
-                    'ADI',
-                    'DC',
-                    'AND',
-                    'OR',
-                    'EOR',
-                    'COMP',
-                    'SC',
-                    'RC',
-                    'SF1',
-                    'RF1',
-                    'SF2',
-                    'RF2',
-                    'LD',
-                    'EX',
-                    'EXD',
-                    'LDI',
-                    'LAX',
-                    'LXA',
-                    'LABL',
-                    'LBMX',
-                    'LBUA',
-                    'XABL',
-                    'XBMX',
-                    'XAX',
-                    'XS',
-                    'CYS',
-                    'LB',
-                    'LBL',
-                    'INCB',
-                    'DECB',
-                    'T',
-                    'TM',
-                    'TL',
-                    'TML',
-                    'SKC',
-                    'SKZ',
-                    'SKBI',
-                    'SKF1',
-                    'SKF2',
-                    'RTN',
-                    'RTNSK',
-                    'IOL',
-                    'DIA',
-                    'DIB',
-                    'DOA',
-                    'SAG'
-                    )
-                                                                            
-    opcodes = {
-            'AD'   : 'AD',
-            'LDI'  : 'LDI'
-            
-            }
-   
-    tokens = tuple(opcodes.values())+ (
+                                                     
+    # opcodes = {
+    #         'AD'   : 'AD',
+    #         'LDI'  : 'LDI'
+    #
+    #         }
+    opcodes = PPS4Inst.full_code.keys()
+    #tokens = tuple(opcodes.values())+ (
+    tokens = tuple(opcodes) + (
        'HYPHEN',
        #'STRING',
        'EQUAL',
@@ -124,7 +76,7 @@ class MyLexer:
     def t_INSTANCE(self, t):
         r'[a-zA-Z_][a-zA-Z_0-9]*'
         if t.value in self.opcodes:
-            t.type = self.opcodes.get(t.value)    # Check for reserved words
+            t.type = t.value    # Check for reserved words
         return t
     
     # def t_LABEL(self, t):
@@ -137,7 +89,7 @@ class MyLexer:
     def t_NEWLINE(self, t):
         r'\n+'
         t.lexer.lineno += len(t.value)
-        #return t
+        return t
     
 
     # A string containing ignored characters (spaces and tabs)

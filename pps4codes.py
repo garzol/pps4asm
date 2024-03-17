@@ -11,7 +11,7 @@ Copyright AA55 Consulting 2024
 
 
 class PPS4Inst:
-    fcode = {
+    full_code = {
         'AD'    : 0x0B,
         'ADC'   : 0x0A,
         'ADSK'  : 0x09,

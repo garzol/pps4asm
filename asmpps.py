@@ -16,14 +16,11 @@ import asmparse
 
 tobeParsed2  = u"AD\nAD AD\n;tytyyt\nLDI 8"
 tobeParsed = ''';programme interne d'essai
-
 AD
-AD AD
-
-LDI 8
+ADC
 '''
 
-VERSION = "0.98"
+VERSION = "0.58"
 
 def loadSrc(fn):
     f = open(fn, "r")
