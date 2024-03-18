@@ -18,19 +18,24 @@ from pps4codes import PPS4Inst
 class MyLexer:  
 
  
-    
+    directives = (
+        'SETB',
+        )
                                                      
-    # opcodes = {
-    #         'AD'   : 'AD',
-    #         'LDI'  : 'LDI'
-    #
-    #         }
     comp_opcodes = (
+        'ADI',
         'LDI',
+        'LD',
+        'EX',
+        'EXD',
+        'LBL',
+        'T',
+        'IOL',
+        'SKBI',
         )
     opcodes = PPS4Inst.full_code.keys()
     #tokens = tuple(opcodes.values())+ (
-    tokens = comp_opcodes+tuple(opcodes) + (
+    tokens = directives + comp_opcodes + tuple(opcodes) + (
        'HYPHEN',
        #'STRING',
        'EQUAL',
@@ -38,9 +43,12 @@ class MyLexer:
        'NEWLINE',
        'LABEL',
        'BYTE',
+       'PAGE',
        'NIBBLE',
+       'THREE_BIT',
        'BBYTE',
        'COMMENT',
+       'DBYTE'
     )
     
     # Regular expression rules for simple tokens
@@ -81,6 +89,8 @@ class MyLexer:
     
     def t_LABEL(self, t):
         r'[a-zA-Z_][a-zA-Z_0-9]*'
+        if t.value in self.directives:
+            t.type = t.value    # Check for reserved words
         if t.value in self.opcodes:
             t.type = t.value    # Check for reserved words
         if t.value in self.comp_opcodes:
@@ -90,8 +100,12 @@ class MyLexer:
     def t_BYTE(self, t):
         r'0X[a-fA-F0-9]{1,2}'
         t.value = int(t.value, 16)
-        if t.value < 16:
+        if t.value < 8:
+            t.type = "THREE_BIT"
+        elif t.value < 16:
             t.type = "NIBBLE"
+        elif t.value < 64:
+            t.type = "PAGE"
             
         return t
     
@@ -99,11 +113,29 @@ class MyLexer:
     def t_BBYTE(self, t):
         r'0B[0|1]{1,8}'
         t.value = int(t.value, 2)
-        if t.value < 16:
+        if t.value < 8:
+            t.type = "THREE_BIT"
+        elif t.value < 16:
             t.type = "NIBBLE"
+        elif t.value < 64:
+            t.type = "PAGE"
         else:
             t.type ="BYTE"
         return t
+    
+    def t_DBYTE(self, t):
+        r'\d+'
+        t.value = int(t.value)
+        if t.value < 8:
+            t.type = "THREE_BIT"
+        elif t.value < 16:
+            t.type = "NIBBLE"
+        elif t.value < 64:
+            t.type = "PAGE"
+        else:
+            t.type ="BYTE"
+        return t
+    
     # def t_LABEL(self, t):
     #     r'[a-zA-Z_][a-zA-Z_0-9]*'
     #     if t.value in self.opcodes:

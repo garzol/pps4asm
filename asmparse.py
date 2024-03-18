@@ -56,15 +56,85 @@ class MyParser:
         print("full code", self.address, PPS4Inst.full_code[p[1]])
         self.address += 1
 
+    def p_statement_adi(self, p):
+        '''statement :    ADI  NIBBLE   NEWLINE
+                        | ADI  THREE_BIT NEWLINE
+
+        '''
+        print("ADI code", self.address, p[1], p[2])
+        self.address += 1
+        
     def p_statement_ldi(self, p):
-        '''statement :    LDI  NIBBLE NEWLINE
+        '''statement :    LDI  NIBBLE    NEWLINE
+                        | LDI  THREE_BIT NEWLINE
         '''
         print("LDI code", self.address, p[1], p[2])
+        self.address += 1
+
+    def p_statement_skbi(self, p):
+        '''statement :    SKBI  NIBBLE    NEWLINE
+                        | SKBI  THREE_BIT NEWLINE
+        '''
+        print("SKBI code", self.address, p[1], p[2])
+        self.address += 1
+
+    def p_statement_ld(self, p):
+        '''statement :    LD  THREE_BIT NEWLINE
+        '''
+        print("LD code", self.address, p[1], p[2])
+        self.address += 1
+
+    def p_statement_ex(self, p):
+        '''statement :    EX  THREE_BIT NEWLINE
+        '''
+        print("EX code", self.address, p[1], p[2])
+        self.address += 1
+
+    def p_statement_exd(self, p):
+        '''statement :    EXD  THREE_BIT NEWLINE
+        '''
+        print("EXD code", self.address, p[1], p[2])
+        self.address += 1
+
+    def p_statement_lbl(self, p):
+        '''statement :    LBL      BYTE NEWLINE
+                        | LBL      PAGE NEWLINE
+                        | LBL    NIBBLE NEWLINE
+                        | LBL THREE_BIT NEWLINE
+        '''
+        print("LBL code", self.address, p[1], p[2])
+        self.address += 2
+
+    def p_statement_iol(self, p):
+        '''statement :    IOL      BYTE NEWLINE
+                        | IOL      PAGE NEWLINE
+                        | IOL    NIBBLE NEWLINE
+                        | IOL THREE_BIT NEWLINE
+        '''
+        print("IOL code", self.address, p[1], p[2])
+        self.address += 2
+
+    def p_statement_t(self, p):
+        '''statement :  T LABEL     NEWLINE
+        '''
+        print("T code", self.address, p[1], p[2])
+        
+        print("goto :",self.labels.get(p[2], "UNKNOWN"))
         self.address += 1
 
     def p_statement_dec_label(self, p):
         '''statement :     LABEL HYPHEN NEWLINE'''
         self.labels[p[1]] = self.address
+
+    def p_statement_setb(self, p):
+        '''statement :    SETB      BYTE NEWLINE
+                        | SETB      PAGE NEWLINE
+                        | SETB    NIBBLE NEWLINE
+                        | SETB THREE_BIT NEWLINE
+        '''
+        print("SETB code", self.address, p[1], p[2])
+        self.address += 1
+
                        
     def p_statement_comment(self, p):
         'statement : COMMENT'

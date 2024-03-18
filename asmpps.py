@@ -17,11 +17,20 @@ import asmparse
 tobeParsed2  = u"AD\nAD AD\n;tytyyt\nLDI 8"
 tobeParsed = ''';programme interne d'essai
 LDI 0B1010
-
+T    Label01
 Ad
 Label01:
-LDI 0X0F
+ADI 0X0F
+T    Label01
 LDI 0X1
+LD 0B101
+EX 0x3
+EXD 0
+LBL 0XCF
+
+IOL 0xDE
+IOL 23
+IOL 1
 '''
 
 VERSION = "0.58"
@@ -55,4 +64,11 @@ if __name__ == "__main__":
     newasm.mypar.parse(data)
     print(newasm.mypar.comment)
     print(newasm.mypar.labels)
+    print(newasm.mypar.address)
+
+    #second pass once we have the labels
+    newasm.mypar.parse(data)
+    print(newasm.mypar.comment)
+    print(newasm.mypar.labels)
+    print(newasm.mypar.address)
 
