@@ -13,10 +13,18 @@ import sys
 
 import asmlex
 import asmparse
-
+tobeParsed ='''
+ad
+ad
+T pipo
+adi 0x1
+pipo:
+'''
 tobeParsed2  = u"AD\nAD AD\n;tytyyt\nLDI 8"
-tobeParsed = ''';programme interne d'essai
+tobeParsed3 = ''';programme interne d'essai
 LDI 0B1010
+adi 8
+adi 0xA
 T    Label01
 Ad
 Label01:
@@ -43,17 +51,15 @@ def loadSrc(fn):
     return (f.read()) 
     
 class MyAsm:
-    def __init__(self, fn):
+    def __init__(self):
         '''
         fn is the name of the bin file to be generated
         '''
         self.name = "pps-4 asm. "+"version: "+VERSION
         self.mylex = asmlex.MyLexer()
         self.mylex.build()
-        self.fp = open(fn, 'wb')
 
-        self.fp.seek()
-        self.mypar = asmparse.MyParser(self.fp)
+        self.mypar = asmparse.MyParser()
         self.mypar.build()
 
         
@@ -63,21 +69,39 @@ if __name__ == "__main__":
     except:
         print ("must specify a file arg. Taking example")
     data = tobeParsed.upper()
-    newasm = MyAsm("pipo.bin")
+    newasm = MyAsm()
     print(newasm.name)
     #print(data)
     print()
-    newasm.mylex.test(data)
+    #newasm.mylex.test(data)
     print(newasm.mylex.comment)
     # print()
-    newasm.mypar.parse(data)
-    print(newasm.mypar.comment)
-    print(newasm.mypar.labels)
-    print(newasm.mypar.address)
-    newasm.fp.close()
-    #second pass once we have the labels
-    newasm.mypar.parse(data)
-    print(newasm.mypar.comment)
-    print(newasm.mypar.labels)
-    print(newasm.mypar.address)
 
+    #first pass before we have all the label values    
+    newasm.mypar.parse(data)
+    print(newasm.mypar.comment)
+    print(newasm.mypar.labels)
+    print(newasm.mypar.address)
+    
+    #second pass once we have the labels
+    newasm.mypar.mode = "make_bin"
+    newasm.mypar.address = 0
+    newasm.mypar.parse(data)
+    print(newasm.mypar.comment)
+    print(newasm.mypar.labels)
+    print(newasm.mypar.address)
+    print(newasm.mypar.maxaddress)
+    print(newasm.mypar.binarray)
+
+    try:
+        ofnl = sys.argv[1].split('.')
+        output_file = '.'.join(ofnl[:-1])+'.bin'
+    except:
+        output_file = "pipogarzolpps4.bin"
+        
+    fd = open(output_file, "wb")
+    fd.write(newasm.mypar.binarray[:newasm.mypar.maxaddress])
+    fd.close()
+    
+    
+    

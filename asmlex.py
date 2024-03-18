@@ -29,17 +29,20 @@ class MyLexer:
         'LD',
         'EX',
         'EXD',
-        'LBL',
+        'LB',
         'T',
-        'IOL',
+        'TL',
+        'TM',
+        'TML',
         'SKBI',
         )
     opcodes = PPS4Inst.full_code.keys()
     #tokens = tuple(opcodes.values())+ (
     tokens = directives + comp_opcodes + tuple(opcodes) + (
        'HYPHEN',
+       'COMMA',
        #'STRING',
-       'EQUAL',
+       #'EQUAL',
        #'LABEL',
        'NEWLINE',
        'LABEL',
@@ -48,15 +51,16 @@ class MyLexer:
        'PAGE',
        'NIBBLE',
        'THREE_BIT',
-       'BADDRESS', # value of type 0xabc but written in binary 0B0111100...
+       #'BADDRESS', # value of type 0xabc but written in binary 0B0111100...
        'COMMENT',
-       'DADDRESS', # value of type 0xabc but written in standard decimal 
+       #'DADDRESS', # value of type 0xabc but written in standard decimal 
     )
     
     # Regular expression rules for simple tokens
     t_HYPHEN  = r':'
     #t_STRING  = r'\".*?\"'
-    t_EQUAL   = r'='
+    #t_EQUAL   = r'='
+    t_COMMA   = r','
     #t_INOUT   = r'\*'
 
 
