@@ -19,6 +19,7 @@ class MyParser:
     def __init__(self):
         self.comment = u""
         self.address = 0
+        self.labels = {}
 
     def p_program(self, p):
         '''program : program statement
@@ -51,11 +52,20 @@ class MyParser:
         
     def p_statement_fcode(self, p):
         '''statement  :    fcode NEWLINE
-        '''
-        
+        '''       
         print("full code", self.address, PPS4Inst.full_code[p[1]])
         self.address += 1
-       
+
+    def p_statement_ldi(self, p):
+        '''statement :    LDI  NIBBLE NEWLINE
+        '''
+        print("LDI code", self.address, p[1], p[2])
+        self.address += 1
+
+    def p_statement_dec_label(self, p):
+        '''statement :     LABEL HYPHEN NEWLINE'''
+        self.labels[p[1]] = self.address
+                       
     def p_statement_comment(self, p):
         'statement : COMMENT'
         print("comment", p[1])

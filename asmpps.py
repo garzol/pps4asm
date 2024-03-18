@@ -16,8 +16,12 @@ import asmparse
 
 tobeParsed2  = u"AD\nAD AD\n;tytyyt\nLDI 8"
 tobeParsed = ''';programme interne d'essai
-AD
-ADC
+LDI 0B1010
+
+Ad
+Label01:
+LDI 0X0F
+LDI 0X1
 '''
 
 VERSION = "0.58"
@@ -40,7 +44,7 @@ if __name__ == "__main__":
         data = loadSrc(sys.argv[1])
     except:
         print ("must specify a file arg. Taking example")
-    data = tobeParsed
+    data = tobeParsed.upper()
     newasm = MyAsm()
     print(newasm.name)
     #print(data)
@@ -50,4 +54,5 @@ if __name__ == "__main__":
     # print()
     newasm.mypar.parse(data)
     print(newasm.mypar.comment)
+    print(newasm.mypar.labels)
 

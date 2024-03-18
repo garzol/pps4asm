@@ -25,15 +25,21 @@ class MyLexer:
     #         'LDI'  : 'LDI'
     #
     #         }
+    comp_opcodes = (
+        'LDI',
+        )
     opcodes = PPS4Inst.full_code.keys()
     #tokens = tuple(opcodes.values())+ (
-    tokens = tuple(opcodes) + (
+    tokens = comp_opcodes+tuple(opcodes) + (
        'HYPHEN',
        #'STRING',
        'EQUAL',
        #'LABEL',
        'NEWLINE',
-       'INSTANCE',
+       'LABEL',
+       'BYTE',
+       'NIBBLE',
+       'BBYTE',
        'COMMENT',
     )
     
@@ -73,12 +79,31 @@ class MyLexer:
     #
     #     return t
     
-    def t_INSTANCE(self, t):
+    def t_LABEL(self, t):
         r'[a-zA-Z_][a-zA-Z_0-9]*'
         if t.value in self.opcodes:
             t.type = t.value    # Check for reserved words
+        if t.value in self.comp_opcodes:
+            t.type = t.value    # Check for reserved words
+        return t
+        
+    def t_BYTE(self, t):
+        r'0X[a-fA-F0-9]{1,2}'
+        t.value = int(t.value, 16)
+        if t.value < 16:
+            t.type = "NIBBLE"
+            
         return t
     
+
+    def t_BBYTE(self, t):
+        r'0B[0|1]{1,8}'
+        t.value = int(t.value, 2)
+        if t.value < 16:
+            t.type = "NIBBLE"
+        else:
+            t.type ="BYTE"
+        return t
     # def t_LABEL(self, t):
     #     r'[a-zA-Z_][a-zA-Z_0-9]*'
     #     if t.value in self.opcodes:
