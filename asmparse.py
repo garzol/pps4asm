@@ -16,10 +16,12 @@ from pps4codes import PPS4Inst
     
     
 class MyParser:
-    def __init__(self):
+    def __init__(self, fp):
         self.comment = u""
         self.address = 0
         self.labels = {}
+        
+        self.fp = fp
 
     def p_program(self, p):
         '''program : program statement
@@ -134,6 +136,16 @@ class MyParser:
         '''
         print("SETB code", self.address, p[1], p[2])
         self.address += 1
+
+    def p_statement_equ(self, p):
+        '''statement :    LABEL  EQU   ADDRESS NEWLINE
+                        | LABEL  EQU      BYTE NEWLINE
+                        | LABEL  EQU      PAGE NEWLINE
+                        | LABEL  EQU    NIBBLE NEWLINE
+                        | LABEL  EQU THREE_BIT NEWLINE
+        '''
+        print("Constant affectation", p[1], p[3])
+        self.labels[p[1]] = p[3]
 
                        
     def p_statement_comment(self, p):

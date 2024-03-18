@@ -20,6 +20,7 @@ class MyLexer:
  
     directives = (
         'SETB',
+        'EQU',
         )
                                                      
     comp_opcodes = (
@@ -42,13 +43,14 @@ class MyLexer:
        #'LABEL',
        'NEWLINE',
        'LABEL',
+       'ADDRESS', # value of type 0xabc
        'BYTE',
        'PAGE',
        'NIBBLE',
        'THREE_BIT',
-       'BBYTE',
+       'BADDRESS', # value of type 0xabc but written in binary 0B0111100...
        'COMMENT',
-       'DBYTE'
+       'DADDRESS', # value of type 0xabc but written in standard decimal 
     )
     
     # Regular expression rules for simple tokens
@@ -97,8 +99,8 @@ class MyLexer:
             t.type = t.value    # Check for reserved words
         return t
         
-    def t_BYTE(self, t):
-        r'0X[a-fA-F0-9]{1,2}'
+    def t_ADDRESS(self, t):
+        r'0X[a-fA-F0-9]{1,3}'
         t.value = int(t.value, 16)
         if t.value < 8:
             t.type = "THREE_BIT"
@@ -106,12 +108,13 @@ class MyLexer:
             t.type = "NIBBLE"
         elif t.value < 64:
             t.type = "PAGE"
-            
+        elif t.value < 256:
+            t.type = "BYTE"            
         return t
     
 
-    def t_BBYTE(self, t):
-        r'0B[0|1]{1,8}'
+    def t_BADDRESS(self, t):
+        r'0B[0|1]{1,12}'
         t.value = int(t.value, 2)
         if t.value < 8:
             t.type = "THREE_BIT"
@@ -119,11 +122,13 @@ class MyLexer:
             t.type = "NIBBLE"
         elif t.value < 64:
             t.type = "PAGE"
+        elif t.value < 256:
+            t.type = "BYTE"
         else:
-            t.type ="BYTE"
+            t.type ="ADDRESS"
         return t
     
-    def t_DBYTE(self, t):
+    def t_DADDRESS(self, t):
         r'\d+'
         t.value = int(t.value)
         if t.value < 8:
@@ -132,8 +137,10 @@ class MyLexer:
             t.type = "NIBBLE"
         elif t.value < 64:
             t.type = "PAGE"
+        elif t.value < 256:
+            t.type = "BYTE"
         else:
-            t.type ="BYTE"
+            t.type ="ADDRESS"
         return t
     
     # def t_LABEL(self, t):

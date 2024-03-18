@@ -27,7 +27,10 @@ LD 0B101
 EX 0x3
 EXD 0
 LBL 0XCF
-
+Pipo equ 244
+POPO equ 0xC0
+PUpu equ 0B10110000
+bibi equ 0x898
 IOL 0xDE
 IOL 23
 IOL 1
@@ -40,11 +43,17 @@ def loadSrc(fn):
     return (f.read()) 
     
 class MyAsm:
-    def __init__(self):
+    def __init__(self, fn):
+        '''
+        fn is the name of the bin file to be generated
+        '''
         self.name = "pps-4 asm. "+"version: "+VERSION
         self.mylex = asmlex.MyLexer()
         self.mylex.build()
-        self.mypar = asmparse.MyParser()
+        self.fp = open(fn, 'wb')
+
+        self.fp.seek()
+        self.mypar = asmparse.MyParser(self.fp)
         self.mypar.build()
 
         
@@ -54,7 +63,7 @@ if __name__ == "__main__":
     except:
         print ("must specify a file arg. Taking example")
     data = tobeParsed.upper()
-    newasm = MyAsm()
+    newasm = MyAsm("pipo.bin")
     print(newasm.name)
     #print(data)
     print()
@@ -65,7 +74,7 @@ if __name__ == "__main__":
     print(newasm.mypar.comment)
     print(newasm.mypar.labels)
     print(newasm.mypar.address)
-
+    newasm.fp.close()
     #second pass once we have the labels
     newasm.mypar.parse(data)
     print(newasm.mypar.comment)
