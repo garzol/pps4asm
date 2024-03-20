@@ -70,7 +70,7 @@ The maximum size of a pps-4 binary file is 0x1000 bytes (4KB)
 
 > No verification of any sort is made. If not taken care of, overlaps are possible, so that code may be overwritten, leading to loss of data
 >
-> :exclamation: Avoid writing code in range 0X0C0..0X0FF:
+> :exclamation: Avoid writing code in range 0X0C0..0X0FF:  
 > In PPS-4 systems, 0X0C0..0X0CF is a reserved 16-byte indirection table for instruction `LB`  
 > In PPS-4 systems, 0X0D0..0X0FF is a reserved 32-byte indirection table for instruction `TM`
 
@@ -226,7 +226,7 @@ label22:
 ##### TM
 48 consecutive locations on ROM page 3 contains pointer data which identify subroutine entry addresses. These subroutine entry addresses are limited to pages 4 through 7. This TM instruction will save the address of the next ROM word in the SA register after loading the original contents of SA into SB. A transfer then occurs to one of the subroutine entry addresses. This instruction occupies one ROM word but takes two cycles for execution.  
 
-What is to be understood there, is that this instruction in an asm file potentially specifies 2 things:  
+What is to be understood there, is that this instruction at assembly time potentially specifies 2 things:  
 1. Specify a jump to target address 
 2. Write the target address in the table of indirection located at 0X0D0..0X0FF  
 
@@ -250,7 +250,7 @@ In this case, the assembler will encode the instruction in the binary file (0XD1
 ##### LB
 Sixteen consecutive locations on ROM page 3 (I2) contain data which can be loaded into the eight least significant bits of the B register by use of any LB instruction. The four most significant bits of B register will be loaded with zeroes. The contents of the SB register will be destroyed. This instruction takes two cycles to execute but occupies only one ROM word. (Automatic return)  
 
-What is to be understood there, is that this instruction in an asm file potentially specifies 2 things:  
+What is to be understood there, is that this instruction at assembly time potentially specifies 2 things:  
 1. Specify a load B register
 2. Write the target value in the table of indirection located at 0X0C0..0X0CF  
 
@@ -283,8 +283,8 @@ Example:
 ##### Inverting instruction.
 Instruction ADI, LD, EX, EXD, LDI, LB and LBL have a numeric value coded as part of the instruction in the immediate field. This numeric value must be in the complementary form on the bus. It goes without saying that this assembler takes care of the inversion for you.
 
-#### Bugs
-Please report bugs to <bugs@pps4.fr>
+#### Questions and Bugs
+Please, ask questions or report bugs to <bugs@pps4.fr>
 
 
 
