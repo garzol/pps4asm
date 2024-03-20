@@ -10,9 +10,11 @@ Copyright AA55 Consulting 2024
 '''
 
 import sys
+import os 
 
 import asmlex
 import asmparse
+
 tobeParsed ='''
 ad
 ad
@@ -108,6 +110,12 @@ if __name__ == "__main__":
         output_file = '.'.join(ofnl[:-1])+'.bin'
     except:
         output_file = "pipogarzolpps4.bin"
+    if os.path.exists(output_file):
+        #ask if we want to garzoler le fichier
+        ans = input("File {0} already exists. Overwrite? (y/n)".format(output_file))
+        if not ans or ans.lower().startswith("n"):
+            print("OK. Aborting.")
+            exit(0)
     try:    
         fd = open(output_file, "wb")
     except Exception as ex:

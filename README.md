@@ -2,7 +2,7 @@
 A simple assembler for PPS-4 systems
 written in python
 
-Yet Another Rockwell pps-4 Assembler "yarp_A" PPS-4   
+Yet Another Rockwell pps-4 Assembler "yarp_A"   
 
 Unique too, since any trace of such a tool is apparently long lost.
 
@@ -96,7 +96,7 @@ A variable is determined by its name, which can be any combination of any number
 
 
 ##### EQX
-Use `EQX` to assign a variable to a byte.  
+Use `EQX` to assign a byte value to a variable.  
 
 ```
 KLA	EQX	0XFE
@@ -278,6 +278,18 @@ Example:
 `; you can write anything you want after a ';'`  
 `; everything that follows, to the end of the line, will be ignored `
 
+#### Error and warning messages
+##### Warnings
+`WARNING: PAGE LIMIT just after mnemonic LBL at line 1091 (address 0X4BE)`  
+
+In a PPS-4 system, the memory is arranged by pages of 64 bytes. The CPU executes each instruction and automatically increments the program counter, unless it is a branch instruction.  
+
+The program counter's size is 12-bit. It is actually made of the concatenation of 2 6-bit registers. Only the LSb is a real counter. The MSb is only updated through a TL, TM, or TML instruction. Thus, the counter only counts from 0 to 0x3F, and then roll over. As a consequence, a 2-byte instruction cannot straddle a page limit, and shall be considered as a programming error. This is the same with a 1-byte instruction at the last byte of a page. if such an instruction, such LAX for example, is implemented at a 0xX3F ROM location, then the next execution will occur at 0xX00, and not at 0xX40.  
+Therefore, while such construction is valid, it is not likely to be a desired construction.  
+   
+This is not necessarily a problem.  
+
+##### Errors
 
 #### Miscellaneous
 ##### Inverting instruction.
@@ -285,6 +297,27 @@ Instruction ADI, LD, EX, EXD, LDI, LB and LBL have a numeric value coded as part
 
 #### Questions and Bugs
 Please, ask questions or report bugs to <bugs@pps4.fr>
+
+
+
+
+
+
+
+> [!NOTE]  
+> Highlights information that users should take into account, even when skimming.
+
+> [!TIP]
+> Optional information to help a user be more successful.
+
+> [!IMPORTANT]  
+> Crucial information necessary for users to succeed.
+
+> [!WARNING]  
+> Critical content demanding immediate user attention due to potential risks.
+
+> [!CAUTION]
+> Negative potential consequences of an action.
 
 
 
