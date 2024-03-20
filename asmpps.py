@@ -55,7 +55,7 @@ class MyAsm:
         '''
         fn is the name of the bin file to be generated
         '''
-        self.name = "pps-4 asm. "+"version: "+VERSION
+        self.name = "pps-4 asm. "+"version: "+VERSION+"("+DATE+")"
         self.mylex = asmlex.MyLexer()
         self.mylex.build()
 
