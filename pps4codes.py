@@ -52,3 +52,9 @@ class PPS4Inst:
         'DOA'   : 0x1D,
         'SAG'   : 0x13,
         }
+
+    birom_code = ['LBL', 'TL', 'TML', 'IOL']
+    forbiddenb2pg_code = ['LBL', 'TML', 'IOL']
+    
+    #to be added to full_code, and remove RTN*
+    forbiddenb1pg_code = ['TML', 'TL']

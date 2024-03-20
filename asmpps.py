@@ -44,8 +44,8 @@ IOL 23
 IOL 1
 '''
 
-VERSION = "0.58"
-
+VERSION = "0.61"
+DATE    = "2024-03-20"
 def loadSrc(fn):
     f = open(fn, "r")
     return (f.read()) 
@@ -66,42 +66,59 @@ class MyAsm:
 if __name__ == "__main__":
     try:
         data = loadSrc(sys.argv[1])
-    except:
-        print ("must specify a file arg. Taking example")
-    data = tobeParsed.upper()
+        print ("Assembling %s... " % sys.argv[1])
+    except Exception as ex:
+        print ("must specify a valid file arg. Taking integrated example.", ex)
+        data = tobeParsed.upper()
+ 
+    data = data.upper()
     newasm = MyAsm()
     print(newasm.name)
     #print(data)
-    print()
+    #print()
     #newasm.mylex.test(data)
-    print(newasm.mylex.comment)
+    if newasm.mylex.comment:
+        print(newasm.mylex.comment)
     # print()
 
     #first pass before we have all the label values    
     newasm.mypar.parse(data)
-    print(newasm.mypar.comment)
-    print(newasm.mypar.labels)
-    print(newasm.mypar.address)
+    if newasm.mypar.comment:
+        print(newasm.mypar.comment)
+        
+    #print(newasm.mypar.labels)
+    #print(newasm.mypar.address)
     
     #second pass once we have the labels
-    newasm.mypar.mode = "make_bin"
-    newasm.mypar.address = 0
-    newasm.mypar.parse(data)
-    print(newasm.mypar.comment)
-    print(newasm.mypar.labels)
-    print(newasm.mypar.address)
-    print(newasm.mypar.maxaddress)
-    print(newasm.mypar.binarray)
+    #we build a second parser to have the line numbers reset 
+    # newasm2 = MyAsm()
+    # newasm2.mypar.mode = "make_bin"
+    # newasm2.mypar.labels = newasm.mypar.labels
+    # newasm2.mypar.address = 0
+    # newasm2.mypar.parse(data)
+    # if newasm2.mypar.comment:
+    #      print(newasm2.mypar.comment)
+    # print(newasm.mypar.labels)
+    #print(newasm.mypar.address)
+    #print(newasm.mypar.maxaddress)
+    #print(newasm.mypar.binarray)
 
     try:
         ofnl = sys.argv[1].split('.')
         output_file = '.'.join(ofnl[:-1])+'.bin'
     except:
         output_file = "pipogarzolpps4.bin"
-        
-    fd = open(output_file, "wb")
-    fd.write(newasm.mypar.binarray[:newasm.mypar.maxaddress])
-    fd.close()
+    try:    
+        fd = open(output_file, "wb")
+    except Exception as ex:
+        print("can't open file", ex)
+    try:
+        fd.write(newasm.mypar.binarray[:newasm.mypar.maxaddress])
+        print("Binary File %s created" % (output_file))
+    except Exception as ex:
+        print("can't write file", ex)
+    finally:
+        fd.close()
     
     
     

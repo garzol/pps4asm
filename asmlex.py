@@ -20,7 +20,9 @@ class MyLexer:
  
     directives = (
         'SETB',
-        'EQU',
+        'EQX',
+        'PTR',
+        'SECTION'
         )
                                                      
     comp_opcodes = (
@@ -40,7 +42,11 @@ class MyLexer:
     #tokens = tuple(opcodes.values())+ (
     tokens = directives + comp_opcodes + tuple(opcodes) + (
        'HYPHEN',
-       'COMMA',
+       #'COMMA',
+       'LPAREN',
+       'RPAREN',
+       'BFEED',
+       'TFEED',
        #'STRING',
        #'EQUAL',
        #'LABEL',
@@ -60,10 +66,12 @@ class MyLexer:
     t_HYPHEN  = r':'
     #t_STRING  = r'\".*?\"'
     #t_EQUAL   = r'='
-    t_COMMA   = r','
+    #t_COMMA   = r','
     #t_INOUT   = r'\*'
-
-
+    t_LPAREN = r'\('
+    t_RPAREN = r'\)'
+    t_BFEED  = r'\(B<='
+    t_TFEED  = r'\(@<='
 
     def __init__(self):
         self.comment = ""

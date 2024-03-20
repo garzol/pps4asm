@@ -40,6 +40,12 @@ class MyParser:
                 p[0][line] = stat
 
 
+    def p_program_error(self, p):
+        '''program : error'''
+        p[0] = None
+        p.parser.error = 1
+    
+
 
     def p_full_code(self, p):
         '''
@@ -85,15 +91,17 @@ class MyParser:
         
         
     def p_statement_fcode(self, p):
-        '''statement  :    fcode NEWLINE
+        '''statement  :    fcode 
         '''       
         #print("full code", self.address, PPS4Inst.full_code[p[1]])
-        self.binarray[self.address] = PPS4Inst.full_code[p[1]]
+        opcode = p[1]
+        self.checkPageLimit(opcode, p)
+        self.binarray[self.address] = PPS4Inst.full_code[opcode]
         self.moveAddress(1)
         
     def p_statement_adi(self, p):
-        '''statement :    ADI  NIBBLE   NEWLINE
-                        | ADI  THREE_BIT NEWLINE
+        '''statement :    ADI  NIBBLE   
+                        | ADI  THREE_BIT 
 
         '''
         # ADI is 0110xxxx
@@ -101,20 +109,27 @@ class MyParser:
         hopcode = 0b0110<<4
         lopcode = ~p[2] & 0xF
         if lopcode == 5 or lopcode == 0xF:
-            print("ERROR ADI INVALID ARGUMENT")
+            self.comment += "ERROR ADI INVALID ARGUMENT at line %s (address 0X{0:03X})\n".format(self.address) % (p.lineno(1))
+            p[0] = None
+            p.parser.error = 1
+            return
+        
+        self.checkPageLimit("ADI", p)
+
         opcode = hopcode+lopcode
-        #print("ADI code", self.address, p[1], p[2], opcode)
+        #print("ADI code", "0X{0:03X}".format(self.address), p[1], p[2], "0X{0:02X}".format(opcode))
         self.binarray[self.address] = opcode
         self.moveAddress(1)
         
         
     def p_statement_ldi(self, p):
-        '''statement :    LDI  NIBBLE    NEWLINE
-                        | LDI  THREE_BIT NEWLINE
+        '''statement :    LDI  NIBBLE    
+                        | LDI  THREE_BIT 
         '''
         # LDI is 0111xxxx
         # xxx is /param
         #print("LDI code", self.address, p[1], p[2])
+        self.checkPageLimit("LDI", p)
         hopcode = 0b0111<<4
         lopcode = ~p[2] & 0xF
         opcode = hopcode+lopcode
@@ -122,11 +137,12 @@ class MyParser:
         self.moveAddress(1)
 
     def p_statement_skbi(self, p):
-        '''statement :    SKBI  NIBBLE    NEWLINE
-                        | SKBI  THREE_BIT NEWLINE
+        '''statement :    SKBI  NIBBLE    
+                        | SKBI  THREE_BIT 
         '''
         # SKBI is 0100xxxx
         #print("SKBI code", self.address, p[1], p[2])
+        self.checkPageLimit("SKBI", p)
         hopcode = 0b0100<<4
         lopcode = p[2] & 0xF
         opcode = hopcode+lopcode
@@ -134,10 +150,11 @@ class MyParser:
         self.moveAddress(1)
 
     def p_statement_ld(self, p):
-        '''statement :    LD  THREE_BIT NEWLINE
+        '''statement :    LD  THREE_BIT 
         '''
         # LD is 00110xxx, param is to be encoded as /param
         #print("LD code", self.address, p[1], p[2])
+        self.checkPageLimit("LD", p)
         hopcode = 0b00110<<3
         lopcode = ~p[2] & 0x7
         opcode = hopcode+lopcode
@@ -145,10 +162,11 @@ class MyParser:
         self.moveAddress(1)
 
     def p_statement_ex(self, p):
-        '''statement :    EX  THREE_BIT NEWLINE
+        '''statement :    EX  THREE_BIT 
         '''
         # EX is 00111xxx, param is to be encoded as /param
         #print("EX code", self.address, p[1], p[2])
+        self.checkPageLimit("EX", p)
         hopcode = 0b00111<<3
         lopcode = ~p[2] & 0x7
         opcode = hopcode+lopcode
@@ -156,10 +174,11 @@ class MyParser:
         self.moveAddress(1)
 
     def p_statement_exd(self, p):
-        '''statement :    EXD  THREE_BIT NEWLINE
+        '''statement :    EXD  THREE_BIT 
         '''
         # EXD is 00101xxx, param is to be encoded as /param
         #print("EXD code", self.address, p[1], p[2])
+        self.checkPageLimit("EXD", p)
         hopcode = 0b00101<<3
         lopcode = ~p[2] & 0x7
         opcode = hopcode+lopcode
@@ -167,40 +186,43 @@ class MyParser:
         self.moveAddress(1)
 
     def p_statement_lbl(self, p):
-        '''statement :    LBL      BYTE NEWLINE
-                        | LBL      PAGE NEWLINE
-                        | LBL    NIBBLE NEWLINE
-                        | LBL THREE_BIT NEWLINE
+        '''statement :    LBL      tbyte 
         '''
         # LBL is 0x00 OxXX, param 0xXX is to be encoded as /param
         # this is a 2-cycle instruction
         #print("LBL code", self.address, p[1], p[2])
+        self.checkPageLimit("LBL", p)
         self.binarray[self.address] = 0
         self.binarray[self.address+1] = ~p[2] & 0xFF
         self.moveAddress(2)
 
     def p_statement_lb(self, p):
-        '''statement :    LB   BYTE      COMMA NIBBLE    NEWLINE
-                        | LB   NIBBLE    COMMA NIBBLE    NEWLINE
-                        | LB   THREE_BIT COMMA NIBBLE    NEWLINE
-                        | LB   BYTE      COMMA THREE_BIT NEWLINE
-                        | LB   NIBBLE    COMMA THREE_BIT NEWLINE
-                        | LB   THREE_BIT COMMA THREE_BIT NEWLINE
+        '''statement :   LB  LPAREN tbyte RPAREN  BFEED tbyte RPAREN 
+                       | LB  LPAREN tbyte RPAREN                     
         '''
         # there is a 16 indirection table where to find the
         # target data
         # LB is C0..CF  
         # C0..CF is also the table loc where to find B(8..1)      
         # this is a 2-cycle but 1-rom loc instruction
-        #print("LB code", self.address, p[1], p[2])
+        #print("LB code", self.address, p[1], p[3])
+        self.checkPageLimit("LB", p)
 
-        ind_table_rank = p[4]
-        opcode = 0b11 << 6 + ind_table_rank
+        opcode = p[3]
 
-        ind_target = self.labels.get(p[2], 0) & 0xFF
-
+        if opcode < 0xC0 or opcode > 0xCF:
+            self.comment += "ERROR LB INVALID ARGUMENT at line %s (address 0X{0:03X})\n".format(self.address) % (p.lineno(1))
+            p[0] = None
+            p.parser.error = 1
+            return
+            
+            
         self.binarray[self.address] = opcode
-        self.binarray[opcode] = ind_target
+        
+        #whether we populate the table or not depends on the used source syntax
+        if len(p) == 8:
+            self.binarray[opcode] = ~p[6]&0XFF
+            #print("LB: set table: 0X{0:02X} at address 0X{1:03X} (at line {2})".format(~p[6]&0XFF, opcode, p.lineno(1)))
         
         if opcode > self.maxaddress:
             self.maxaddress = opcode 
@@ -208,18 +230,45 @@ class MyParser:
         self.moveAddress(1)
 
     def p_statement_iol(self, p):
-        '''statement :    IOL      BYTE NEWLINE
-                        | IOL      PAGE NEWLINE
-                        | IOL    NIBBLE NEWLINE
-                        | IOL THREE_BIT NEWLINE
-        '''
+        '''statement :    IOL      tbyte 
+         '''
         #print("IOL code", self.address, p[1], p[2])
+        self.checkPageLimit("IOL", p)
+        
         self.binarray[self.address] = 0x1C
         self.binarray[self.address+1] = p[2]
         self.moveAddress(2)
+    
+    def p_tptr(self, p):
+        '''
+           tptr :       ADDRESS
+                      | BYTE
+                      | PAGE
+                      | NIBBLE
+                      | THREE_BIT
+                      | value
+        '''  
+        p[0] = p[1]  
 
+
+    def p_exp_var(self, p):
+        '''
+           value : LABEL
+        '''
+        p[0] = self.labels.get(p[1], 0)
+               
+    def p_tbyte(self, p):
+        '''
+           tbyte :      BYTE
+                      | PAGE
+                      | NIBBLE
+                      | THREE_BIT
+                      | value
+        '''    
+        p[0] = p[1]  
+        
     def p_statement_t(self, p):
-        '''statement :  T LABEL     NEWLINE
+        '''statement :  T tptr     
         '''
         # T is 10xxxxxx xxxxxx is the index in current page
         # so for absolute address in label as expected
@@ -228,10 +277,13 @@ class MyParser:
         # in prune mode set this param to 0
         #print("T code", self.address, p[1], p[2])
         
-        #print("goto :",self.labels.get(p[2], "UNKNOWN"))
-        target_page_index = self.labels.get(p[2], 0) & 0b111111
-        if self.labels.get(p[2], 0) & 0b111111000000 != self.address & 0b111111000000:
-            print("ERROR T OFF RANGE TARGET ADDRESS")
+        #print("goto :",p[2])
+        target_page_index = p[2] & 0b111111
+        if p[2] & 0b111111000000 != self.address & 0b111111000000:
+            self.comment += "ERROR T OFF RANGE TARGET ADDRESS at line %s (address 0X{0:03X})\n".format(self.address) % (p.lineno(1))
+            p[0] = None
+            p.parser.error = 1
+            return
             
         hopcode = 0b10<<6
         lopcode = target_page_index
@@ -240,62 +292,45 @@ class MyParser:
         self.moveAddress(1)
 
     def p_statement_tl(self, p):
-        '''statement :  TL LABEL     NEWLINE
+        '''statement :  TL tptr     
         '''
         # TL is 0101yyyy xxxxxx with yyyyxxxxxxxx being the target address
         # 2 cycles
-        #print("TL code", self.address, p[1], p[2])
+        #print("TL code", self.address, p[1], "0X{0:03X}".format(p[2]))
         
         #print("goto :",self.labels.get(p[2], "UNKNOWN"))
-        target_page_index = self.labels.get(p[2], 0) & 0b111111
-        if self.labels.get(p[2], 0) & 0b111111000000 != self.address & 0b111111000000:
-            print("ERROR T OFF RANGE TARGET ADDRESS")
+
+        self.checkPageLimit("TL", p)
             
         hopcode = 0b0101<<4
-        lopcode = (self.labels.get(p[2], 0) & 0b111100000000) >> 8
+        lopcode = (p[2] & 0b111100000000) >> 8
         opcode = hopcode+lopcode
         self.binarray[self.address]   = opcode
-        self.binarray[self.address+1] = self.labels.get(p[2], 0) & 0xFF
+        self.binarray[self.address+1] = p[2] & 0xFF
         self.moveAddress(2)
 
     def p_statement_tml(self, p):
-        '''statement :  TML LABEL     NEWLINE
+        '''statement :  TML tptr     
         '''
         # TML is 000000yy xxxxxxxx 
         # 2 cycles
         #print("TML code", self.address, p[1], p[2])
         
         #print("goto :",self.labels.get(p[2], "UNKNOWN"))
-        target_page = (self.labels.get(p[2], 0) & 0b111111000000)>>6
+        target_page = (p[2] & 0b111111000000)>>6
         if target_page < 4 or target_page > 15:
             print("ERROR TML ONLY WORKS FOR TARGET ADDRESS ON PAGE 4 TO 15 ")
-        opcode = (self.labels.get(p[2], 0) & 0b001100000000) >> 8
+        opcode = (p[2] & 0b001100000000) >> 8
+        
+        self.checkPageLimit("TML", p)
             
         self.binarray[self.address]   = opcode
-        self.binarray[self.address+1] = self.labels.get(p[2], 0) & 0xFF
+        self.binarray[self.address+1] = p[2] & 0xFF
         self.moveAddress(2)
 
     def p_statement_tm(self, p):
-        '''statement :   TM ADDRESS   COMMA PAGE      NEWLINE
-                       | TM ADDRESS   COMMA BYTE      NEWLINE
-                       | TM ADDRESS   COMMA NIBBLE    NEWLINE
-                       | TM ADDRESS   COMMA THREE_BIT NEWLINE
-                       | TM PAGE      COMMA PAGE      NEWLINE
-                       | TM PAGE      COMMA BYTE      NEWLINE
-                       | TM PAGE      COMMA NIBBLE    NEWLINE
-                       | TM PAGE      COMMA THREE_BIT NEWLINE
-                       | TM BYTE      COMMA PAGE      NEWLINE
-                       | TM BYTE      COMMA BYTE      NEWLINE
-                       | TM BYTE       COMMA NIBBLE    NEWLINE
-                       | TM BYTE      COMMA THREE_BIT NEWLINE
-                       | TM NIBBLE    COMMA PAGE      NEWLINE
-                       | TM NIBBLE    COMMA BYTE      NEWLINE
-                       | TM NIBBLE    COMMA NIBBLE    NEWLINE
-                       | TM NIBBLE    COMMA THREE_BIT NEWLINE
-                       | TM THREE_BIT COMMA PAGE      NEWLINE
-                       | TM THREE_BIT COMMA BYTE      NEWLINE
-                       | TM THREE_BIT COMMA NIBBLE    NEWLINE
-                       | TM THREE_BIT COMMA THREE_BIT NEWLINE
+        '''statement :   TM  LPAREN tbyte RPAREN  TFEED tptr RPAREN 
+                       | TM  LPAREN tbyte RPAREN                    
         '''
         # TM is 11xx.... xx...... is the page index inside page 3
         # 2 cycles but only 1 rom word
@@ -311,49 +346,71 @@ class MyParser:
         #
         #print("goto :",self.labels.get(p[2], "UNKNOWN"))
         #
-        ind_table_rank = p[4]
-        opcode = 0b11 << 6 + ind_table_rank
-        target_page = (self.labels.get(p[2], 0) & 0b111111000000)>>6
-        if target_page < 4 or target_page > 7:
-            print("ERROR TM ONLY WORKS FOR TARGET ADDRESS ON PAGE 4 TO 15 ")
-        ind_target = self.labels.get(p[2], 0) & 0xFF
-        if opcode < 0xD0 or opcode > 0xFF:
-            print("ERROR TM ARGUMENT NOT IN TABLE RANGE")
+        self.checkPageLimit("TM", p)
 
-        if opcode > self.maxaddress:
-            self.maxaddress = opcode 
-               
-        self.binarray[self.address]   = opcode
-        self.binarray[opcode]         = ind_target
+        opcode = p[3]
+
+        if opcode < 0xD0 or opcode > 0xFF:
+            self.comment += "ERROR TM INVALID ARGUMENT 1 0X{1:02X} at line %s - must be in range 0XD0..0XFF (address 0X{0:03X})\n".format(self.address, opcode) % (p.lineno(1))
+            p[0] = None
+            p.parser.error = 1
+            return
+            
+            
+        self.binarray[self.address] = opcode
+        
+        #whether we populate the table or not depends on the used source syntax
+        if len(p) == 8:
+            if p[6] > 0x1FF:
+                self.comment += "ERROR TM INVALID ARGUMENT 2 at line %s (address 0X{0:03X})\n".format(self.address) % (p.lineno(1))
+                p[0] = None
+                p.parser.error = 1
+                return
+                
+            self.binarray[opcode] = p[6]&0xFF
+            #print("TM: set table: 0X{0:02X} at address 0X{1:03X} (at line {2})".format(p[6]&0xFF, opcode, p.lineno(1)))
+            if opcode > self.maxaddress:
+                self.maxaddress = opcode 
+                       
         self.moveAddress(1)
+
+
 
     def p_statement_dec_label(self, p):
         '''statement :     LABEL HYPHEN NEWLINE'''
         self.labels[p[1]] = self.address
 
     def p_statement_setb(self, p):
-        '''statement :    SETB      BYTE NEWLINE
-                        | SETB      PAGE NEWLINE
-                        | SETB    NIBBLE NEWLINE
-                        | SETB THREE_BIT NEWLINE
+        '''statement :    SETB      tbyte 
         '''
-        print("SETB code", self.address, p[1], p[2])
-        self.address += 1
+        #print("SETB code", self.address, p[1], p[2])
+        self.binarray[self.address]   = p[2]
+        self.moveAddress(1)
 
-    def p_statement_equ(self, p):
-        '''statement :    LABEL  EQU   ADDRESS NEWLINE
-                        | LABEL  EQU      BYTE NEWLINE
-                        | LABEL  EQU      PAGE NEWLINE
-                        | LABEL  EQU    NIBBLE NEWLINE
-                        | LABEL  EQU THREE_BIT NEWLINE
+    def p_statement_eqx(self, p):
+        '''statement :    LABEL  EQX   tbyte NEWLINE
         '''
-        print("Constant affectation", p[1], p[3])
+        #print("Constant BYTE affectation", p[1], p[3])
         self.labels[p[1]] = p[3]
 
-                       
+    def p_statement_ptr(self, p):
+        '''statement :    LABEL  PTR   tptr NEWLINE
+        '''
+        #print("Constant BYTE affectation", p[1], p[3])
+        self.labels[p[1]] = p[3]
+
+
+    def p_statement_section(self,p):
+        '''
+        statement : SECTION tptr NEWLINE
+        '''  
+        self.address = p[2]    
+        if self.address > self.maxaddress:
+            self.maxaddress = self.address 
+                         
     def p_statement_comment(self, p):
         'statement : COMMENT'
-        print("comment", p[1])
+        #print("comment", p[1])
         
     # def p_statement_label(self, p):
     #     'statement : LABEL NEWLINE'
@@ -383,7 +440,11 @@ class MyParser:
     def build(self, **kwargs):
         self.tokens = asmlex.MyLexer.tokens
         self.bparser = yacc.yacc('LALR', 0, self, write_tables=0, debugfile=None)
-    
+        # self.precedence = (
+        #                     ('left', 'LPAREN'),
+        #                     ('left', 'BFEED'),
+        #                     ('left', 'TFEED')
+        #                   )
     def parse(self, data, debug=0):
         self.bparser.error = 0
         p = self.bparser.parse(data, debug=debug)
@@ -394,4 +455,39 @@ class MyParser:
         self.address += offset
         if self.maxaddress < self.address: 
             self.maxaddress = self.address
+            
+    def checkPageLimit(self, mnemonic, p):
+        '''
+        Here we check that:
+        - a 2-rom loc instruction is not straddling page frontier
+        '''
+        #LBL cannot be n-1, nor n-2
+        #TL  cannot be n-1, but can be n-2
+        #TML cannot be n-1, nor n-2
+        #IOL cannot be n-1, nor n-2
+        #all codes in full_code cannot be n-1, except rtn and rtnsk
+        
+        if (self.address & 0b111111) == 62:          
+            cannotbe_b2pg  = PPS4Inst.forbiddenb2pg_code
+            if mnemonic in cannotbe_b2pg:
+                self.comment += "WARNING: PAGE LIMIT just after mnemonic %s at line %s (address 0X{0:03X})\n".format(self.address) % (mnemonic, p.lineno(1))
+                # p[0] = None
+                # p.parser.error = 1
+                return "bad n-2"
+            else:
+                return "good"
+            
+        if (self.address & 0b111111) == 63:  
+            if mnemonic in ['RTN', 'RTNSK', 'T']:
+                return "good"                    
+            self.comment += "WARNING: PAGE LIMIT just after mnemonic %s at line %s (address 0X{0:03X})\n".format(self.address) % (mnemonic, p.lineno(1))
+            # p[0] = None
+            # p.parser.error = 1
+            return "bad n-1"
+
+        #no probs: address is neither n-1 nor n-2
+        return "good"
+       
+        
+        
         
