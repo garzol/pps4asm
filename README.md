@@ -304,6 +304,11 @@ Please, ask questions or report bugs to <bugs@pps4.fr>
 
 
 
+
+
+
+#### Reminder
+
 > [!NOTE]  
 > Highlights information that users should take into account, even when skimming.
 
