@@ -7,6 +7,13 @@ Created on 7 march. 2024
 
 @author: garzol
 Copyright AA55 Consulting 2024
+
+
+Changelog:
+2024-03-24:
+Reinstall the method with 2 passes to get the label assignement
+ 
+
 '''
 
 import sys
@@ -46,8 +53,8 @@ IOL 23
 IOL 1
 '''
 
-VERSION = "0.61"
-DATE    = "2024-03-20"
+VERSION = "0.71"
+DATE    = "2024-03-24"
 def loadSrc(fn):
     f = open(fn, "r")
     return (f.read()) 
@@ -66,6 +73,7 @@ class MyAsm:
 
         
 if __name__ == "__main__":
+    Debug = None
     try:
         data = loadSrc(sys.argv[1])
         print ("Assembling %s... " % sys.argv[1])
@@ -84,23 +92,30 @@ if __name__ == "__main__":
     # print()
 
     #first pass before we have all the label values    
+    print("===PASS 1===")
     newasm.mypar.parse(data)
     if newasm.mypar.comment:
         print(newasm.mypar.comment)
+    else:
+        print("OK")
         
     #print(newasm.mypar.labels)
     #print(newasm.mypar.address)
     
     #second pass once we have the labels
     #we build a second parser to have the line numbers reset 
-    # newasm2 = MyAsm()
-    # newasm2.mypar.mode = "make_bin"
-    # newasm2.mypar.labels = newasm.mypar.labels
-    # newasm2.mypar.address = 0
-    # newasm2.mypar.parse(data)
-    # if newasm2.mypar.comment:
-    #      print(newasm2.mypar.comment)
-    # print(newasm.mypar.labels)
+    print("===PASS 2===")
+    
+    newasm2 = MyAsm()
+    newasm2.mypar.mode = "make_bin"
+    newasm2.mypar.labels = newasm.mypar.labels
+    newasm2.mypar.address = 0
+    newasm2.mypar.parse(data)
+    if newasm2.mypar.comment:
+         print(newasm2.mypar.comment)
+         
+    if Debug is not None:
+        print("labels table after pass2:", newasm2.mypar.labels)
     #print(newasm.mypar.address)
     #print(newasm.mypar.maxaddress)
     #print(newasm.mypar.binarray)
@@ -121,7 +136,7 @@ if __name__ == "__main__":
     except Exception as ex:
         print("can't open file", ex)
     try:
-        fd.write(newasm.mypar.binarray[:newasm.mypar.maxaddress])
+        fd.write(newasm2.mypar.binarray[:newasm2.mypar.maxaddress])
         print("Binary File %s created" % (output_file))
     except Exception as ex:
         print("can't write file", ex)
