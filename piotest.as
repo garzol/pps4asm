@@ -19,6 +19,7 @@
 	DELAY33MS	PTR	0x1D2	
 	BOOT		PTR 0x000
 	SEC200      PTR 0x200
+	SEC240      PTR 0x240
 	SEC280      PTR 0x280
 	
 SECTION BOOT
@@ -34,8 +35,14 @@ next:
 	IOL	0XD3			;0X764	; Input/Output Long
 	TML	DELAY33MS		;0X766	; Transfer and Mark Long
 	TML	DELAY33MS		;0X766	; Transfer and Mark Long
+	TML	DELAY33MS		;0X766	; Transfer and Mark Long
 	LDI	0X9				;0X763	; Load Accumulator Immediate
 	IOL	0XD3			;0X764	; Input/Output Long
+	TML	DELAY33MS		;0X766	; Transfer and Mark Long
+	TML	DELAY33MS		;0X766	; Transfer and Mark Long
+	LDI	0XA				;0X763	; Load Accumulator Immediate
+	IOL	0XD3			;0X764	; Input/Output Long
+	TML	DELAY33MS		;0X766	; Transfer and Mark Long
 	TML	DELAY33MS		;0X766	; Transfer and Mark Long
 	TML	DELAY33MS		;0X766	; Transfer and Mark Long
 	LDI	0X0				;0X768	; Load Accumulator Immediate
@@ -44,7 +51,7 @@ next:
     
 SECTION SEC200
 	TML DELAY33MS
-    LBL 0x82             ; @2 contains start/stop - 82=>try the other bank
+    LBL 0x02             ; @2 contains start/stop - 82=>try the other bank. does not work
     LD  0               ; A<-@2
     SKZ
     T   startIOL        ; goto start command
@@ -52,13 +59,13 @@ SECTION SEC200
 startIOL:
 	EOR					;reset A
 	EX  0               ;reset the trigger, so command is calle only once per trig 
-	DECB				; B is now 1 (or 81...)
+	LBL 0x04			; B is now 4 
 	LD 	0               ; A<-@1 (command)	
 	LXA					; command in X
-	DECB				; B is now 0 (or 80...)
+	LBL 0x06			; B is now 6 
 	LD  0               ; A<-@0 (param)
 	XAX					; command in A, param in X 
-	XABL				; B<-command
+	XABL				; BL<-command, A<-BL which is 6 at this moment
 	XAX                 ; param back in A
 	DECB
 	T   commandisnot0
@@ -97,8 +104,12 @@ commandisnot7:
 	TL  execD8
 commandisnot8:		
 	DECB	
-	T   commandisnot9
+	T   interm0
 	TL  execD9
+interm0:
+	TL   commandisnot9
+	
+SECTION SEC240
 commandisnot9:		
 	DECB	
 	TL   commandisnotA
