@@ -44,7 +44,7 @@ next:
     
 SECTION SEC200
 	TML DELAY33MS
-    LBL 0x2             ; @2 contains start/stop
+    LBL 0x82             ; @2 contains start/stop - 82=>try the other bank
     LD  0               ; A<-@2
     SKZ
     T   startIOL        ; goto start command
@@ -52,10 +52,10 @@ SECTION SEC200
 startIOL:
 	EOR					;reset A
 	EX  0               ;reset the trigger, so command is calle only once per trig 
-	DECB				; B is now 1
+	DECB				; B is now 1 (or 81...)
 	LD 	0               ; A<-@1 (command)	
 	LXA					; command in X
-	DECB				; B is now 0 
+	DECB				; B is now 0 (or 80...)
 	LD  0               ; A<-@0 (param)
 	XAX					; command in A, param in X 
 	XABL				; B<-command
