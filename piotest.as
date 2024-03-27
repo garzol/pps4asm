@@ -16,11 +16,12 @@
 ;                     device id is supposed to be D (not configurable)
 
 
-	DELAY33MS	PTR	0x1D2	
 	BOOT		PTR 0x000
+	DELAY33MS	PTR	0x1D2	
 	SEC200      PTR 0x200
 	SEC240      PTR 0x240
 	SEC280      PTR 0x280
+	SEC300		PTR 0x300
 	
 SECTION BOOT
 	
@@ -49,13 +50,49 @@ next:
 	IOL	0XD3			;0X769	; Input/Output Long
     TL	SEC200      
     
+    
+    
+SECTION	DELAY33MS
+;delay for x ms. 6832cyclx5us==>34ms per call
+	LDI	0X0				;0X1D2	; Load Accumulator Immediate
+	XABL				;0X1D3	; Exchange Accumulator and BL
+	SAG					;0X1D4	; Special Address Generation
+	EX	0				;0X1D5	; Exchange Accumulator and Memory
+	INCB				;0X1D6	; Increment BL
+	LDI	0X7				;0X1D7	; Load Accumulator Immediate
+	SAG					;0X1D8	; Special Address Generation
+	EX	0				;0X1D9	; Exchange Accumulator and Memory
+	LDI	0X0				;0X1DA	; Load Accumulator Immediate
+	T	0X1DC			;0X1DB	; Transfer
+	ADI	0X1				;0X1DC	; Add Immediate and skip on carry-out
+	T	0X1DB			;0X1DD	; Transfer
+	INCB				;0X1DE	; Increment BL
+	T	0X1DA			;0X1DF	; Transfer
+	INCB				;0X1E0	; Increment BL
+	RC					;0X1E1	; Reset Carry flip-flop
+	LDI	0X1				;0X1E2	; Load Accumulator Immediate
+	SAG					;0X1E3	; Special Address Generation
+	AD					;0X1E4	; Add
+	SAG					;0X1E5	; Special Address Generation
+	EX	0				;0X1E6	; Exchange Accumulator and Memory
+	SKC					;0X1E7	; Skip on Carry flip-flop
+	T	0X1DA			;0X1E8	; Transfer
+	DECB				;0X1E9	; Decrement BL
+	SAG					;0X1EA	; Special Address Generation
+	EX	0				;0X1EB	; Exchange Accumulator and Memory
+	XABL				;0X1EC	; Exchange Accumulator and BL
+	RTN					;0X1ED	; Return
+	
+	    
+    
 SECTION SEC200
-	TML DELAY33MS
+	TML READIOLHIGH
+follows:
     LBL 0x02             ; @2 contains start/stop - 82=>try the other bank. does not work
     LD  0               ; A<-@2
     SKZ
     T   startIOL        ; goto start command
-    T   SEC200
+    T   follows
 startIOL:
 	EOR					;reset A
 	EX  0               ;reset the trigger, so command is calle only once per trig 
@@ -196,40 +233,28 @@ execDF:
 	TL  SEC200
 	
 
-	
+SECTION SEC300
+
+READIOLHIGH:
+	LDI	0xA
+	IOL	0xD8	
+	LDI 0x5
+	IOL 0xD9
+	LDI 0xA
+	IOL 0xDA
+	LDI 0x5
+	IOL 0xDB
+	LDI 0xA
+	IOL 0xDC
+	LDI 0x5
+	IOL 0xDD
+	LDI 0xA
+	IOL 0xDE
+	LDI 0x5
+	IOL 0xDF
+	RTN
 
 
 
-SECTION	DELAY33MS
-;delay for x ms. 6832cyclx5us==>34ms per call
-	LDI	0X0				;0X1D2	; Load Accumulator Immediate
-	XABL				;0X1D3	; Exchange Accumulator and BL
-	SAG					;0X1D4	; Special Address Generation
-	EX	0				;0X1D5	; Exchange Accumulator and Memory
-	INCB				;0X1D6	; Increment BL
-	LDI	0X7				;0X1D7	; Load Accumulator Immediate
-	SAG					;0X1D8	; Special Address Generation
-	EX	0				;0X1D9	; Exchange Accumulator and Memory
-	LDI	0X0				;0X1DA	; Load Accumulator Immediate
-	T	0X1DC			;0X1DB	; Transfer
-	ADI	0X1				;0X1DC	; Add Immediate and skip on carry-out
-	T	0X1DB			;0X1DD	; Transfer
-	INCB				;0X1DE	; Increment BL
-	T	0X1DA			;0X1DF	; Transfer
-	INCB				;0X1E0	; Increment BL
-	RC					;0X1E1	; Reset Carry flip-flop
-	LDI	0X1				;0X1E2	; Load Accumulator Immediate
-	SAG					;0X1E3	; Special Address Generation
-	AD					;0X1E4	; Add
-	SAG					;0X1E5	; Special Address Generation
-	EX	0				;0X1E6	; Exchange Accumulator and Memory
-	SKC					;0X1E7	; Skip on Carry flip-flop
-	T	0X1DA			;0X1E8	; Transfer
-	DECB				;0X1E9	; Decrement BL
-	SAG					;0X1EA	; Special Address Generation
-	EX	0				;0X1EB	; Exchange Accumulator and Memory
-	XABL				;0X1EC	; Exchange Accumulator and BL
-	RTN					;0X1ED	; Return
-	
-	
+
 	

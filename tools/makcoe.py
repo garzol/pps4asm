@@ -18,6 +18,7 @@ creation
 
 
 import sys
+import datetime
 import os.path as path
 
 
@@ -43,6 +44,7 @@ def entryPoint(fn):
     print (f"Will generate {basefilename}.coe")   
     title =f";******************************************************************\n\
 ;********  {basefilename} ROM Block Memory .COE file  *********\n\
+;********  {datetime.datetime.now()}  ********************\n\
 ;******************************************************************\n"
     radix = "memory_initialization_radix=16;\n"
     head  = "memory_initialization_vector=\n"
