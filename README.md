@@ -305,6 +305,9 @@ Please, ask questions or report bugs to <bugs@pps4.fr>
 
 
 
+#### Changelog
+2024-03-24:  
+Reinstall the method with 2 passes to get the label assignement
 
 
 #### Reminder

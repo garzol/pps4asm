@@ -211,10 +211,11 @@ class MyParser:
         opcode = p[3]
 
         if opcode < 0xC0 or opcode > 0xCF:
-            self.comment += "ERROR LB INVALID ARGUMENT at line %s (address 0X{0:03X})\n".format(self.address) % (p.lineno(1))
-            p[0] = None
-            p.parser.error = 1
-            return
+            if self.mode != "prune":
+                self.comment += "ERROR LB INVALID ARGUMENT at line %s (address 0X{0:03X})\n".format(self.address) % (p.lineno(1))
+                p[0] = None
+                p.parser.error = 1
+                return
             
             
         self.binarray[self.address] = opcode
@@ -249,7 +250,7 @@ class MyParser:
                       | value
         '''  
         p[0] = p[1]  
-
+        
 
     def p_exp_var(self, p):
         '''
@@ -280,14 +281,16 @@ class MyParser:
         #print("goto :",p[2])
         target_page_index = p[2] & 0b111111
         if p[2] & 0b111111000000 != self.address & 0b111111000000:
-            self.comment += "ERROR T OFF RANGE TARGET ADDRESS at line %s (address 0X{0:03X})\n".format(self.address) % (p.lineno(1))
-            p[0] = None
-            p.parser.error = 1
-            return
+            if self.mode != "prune":
+                self.comment += "ERROR T OFF RANGE TARGET ADDRESS at line %s (current addr. 0X{0:03X}, target addr. 0X{1:03X})\n".format(self.address, p[2]) % (p.lineno(1))
+                p[0] = None
+                p.parser.error = 1
+                return
             
         hopcode = 0b10<<6
         lopcode = target_page_index
         opcode = hopcode+lopcode
+        #print("goto :",p[2], "opcode {0:02X}".format(opcode))
         self.binarray[self.address] = opcode
         self.moveAddress(1)
 
@@ -319,7 +322,8 @@ class MyParser:
         #print("goto :",self.labels.get(p[2], "UNKNOWN"))
         target_page = (p[2] & 0b111111000000)>>6
         if target_page < 4 or target_page > 15:
-            print("ERROR TML ONLY WORKS FOR TARGET ADDRESS ON PAGE 4 TO 15 ")
+            if self.mode != "prune":
+                print("ERROR TML ONLY WORKS FOR TARGET ADDRESS ON PAGE 4 TO 15 ")
         opcode = (p[2] & 0b001100000000) >> 8
         
         self.checkPageLimit("TML", p)
@@ -351,10 +355,11 @@ class MyParser:
         opcode = p[3]
 
         if opcode < 0xD0 or opcode > 0xFF:
-            self.comment += "ERROR TM INVALID ARGUMENT 1 0X{1:02X} at line %s - must be in range 0XD0..0XFF (address 0X{0:03X})\n".format(self.address, opcode) % (p.lineno(1))
-            p[0] = None
-            p.parser.error = 1
-            return
+            if self.mode != "prune":
+                self.comment += "ERROR TM INVALID ARGUMENT 1 0X{1:02X} at line %s - must be in range 0XD0..0XFF (address 0X{0:03X})\n".format(self.address, opcode) % (p.lineno(1))
+                p[0] = None
+                p.parser.error = 1
+                return
             
             
         self.binarray[self.address] = opcode
@@ -362,10 +367,11 @@ class MyParser:
         #whether we populate the table or not depends on the used source syntax
         if len(p) == 8:
             if p[6] > 0x1FF:
-                self.comment += "ERROR TM INVALID ARGUMENT 2 at line %s (address 0X{0:03X})\n".format(self.address) % (p.lineno(1))
-                p[0] = None
-                p.parser.error = 1
-                return
+                if self.mode != "prune":
+                    self.comment += "ERROR TM INVALID ARGUMENT 2 at line %s (address 0X{0:03X})\n".format(self.address) % (p.lineno(1))
+                    p[0] = None
+                    p.parser.error = 1
+                    return
                 
             self.binarray[opcode] = p[6]&0xFF
             #print("TM: set table: 0X{0:02X} at address 0X{1:03X} (at line {2})".format(p[6]&0xFF, opcode, p.lineno(1)))
@@ -469,7 +475,7 @@ class MyParser:
         
         if (self.address & 0b111111) == 62:          
             cannotbe_b2pg  = PPS4Inst.forbiddenb2pg_code
-            if mnemonic in cannotbe_b2pg:
+            if mnemonic in cannotbe_b2pg and self.mode != "prune":
                 self.comment += "WARNING: PAGE LIMIT just after mnemonic %s at line %s (address 0X{0:03X})\n".format(self.address) % (mnemonic, p.lineno(1))
                 # p[0] = None
                 # p.parser.error = 1
@@ -478,7 +484,7 @@ class MyParser:
                 return "good"
             
         if (self.address & 0b111111) == 63:  
-            if mnemonic in ['RTN', 'RTNSK', 'T']:
+            if mnemonic in ['RTN', 'RTNSK', 'T'] or self.mode == "prune":
                 return "good"                    
             self.comment += "WARNING: PAGE LIMIT just after mnemonic %s at line %s (address 0X{0:03X})\n".format(self.address) % (mnemonic, p.lineno(1))
             # p[0] = None
