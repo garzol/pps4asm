@@ -29,7 +29,7 @@ SECTION BOOT
 next:
 	RF1					;0X001	; Reset FF1
 	RF2					;0X002	; Reset FF2
-	TML	DELAY33MS
+	;TML	DELAY33MS
 
 ;play bip bip	
 	LDI	0XF				;0X763	; Load Accumulator Immediate
@@ -48,6 +48,10 @@ next:
 	TML	DELAY33MS		;0X766	; Transfer and Mark Long
 	LDI	0X0				;0X768	; Load Accumulator Immediate
 	IOL	0XD3			;0X769	; Input/Output Long
+
+    LBL 0x02             ; @2 contains start/stop - 82=>try the other bank. does not work
+	LDI 0x0
+	EX  0
     TL	SEC200      
     
     
@@ -87,15 +91,15 @@ SECTION	DELAY33MS
     
 SECTION SEC200
 	TML READIOLHIGH
-follows:
     LBL 0x02             ; @2 contains start/stop - 82=>try the other bank. does not work
+follows:
     LD  0               ; A<-@2
     SKZ
     T   startIOL        ; goto start command
     T   follows
 startIOL:
 	EOR					;reset A
-	EX  0               ;reset the trigger, so command is calle only once per trig 
+	EX  0               ;reset the trigger, so command is called only once per trig 
 	LBL 0x04			; B is now 4 
 	LD 	0               ; A<-@1 (command)	
 	LXA					; command in X
@@ -149,9 +153,11 @@ interm0:
 SECTION SEC240
 commandisnot9:		
 	DECB	
-	TL   commandisnotA
+	;TL   commandisnotA    ;is it permitted?
+	T   commandisnotA_0
 	TL  execDA
-	setb  0x00
+commandisnotA_0:
+	TL  commandisnotA
 	;setb  0x00
 	;setb  0x00
 	
