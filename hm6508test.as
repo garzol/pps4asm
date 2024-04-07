@@ -90,6 +90,27 @@ readloop:
 	TL  SEC040
 	
 SECTION SEC040
+ 	SKF2				; Skip on Carry flip-flop
+ 	LDI	8				; Load Accumulator Immediate
+ 	LDI	0				; Load Accumulator Immediate
+;IO1 is data out
+	LBL	001				; Load B Long
+	IOL	0x41			; Input/Output Long
+;IO3 is read/write=>write enable pulse
+	LBL	003				; Load B Long
+	LDI	0				; Load Accumulator Immediate
+	IOL	0x41			; Input/Output Long
+	IOL	0x41			; Input/Output Long
+
+;toggle write 0/1 alternatively
+	SKF2
+	T   setF2now
+	RF2
+	T   continuetheboulot
+setF2now:	
+	SF2
+	
+continuetheboulot:	
 ;disable HM6508
 	LBL	002				; Load B Long
 	LDI	8				; Load Accumulator Immediate
