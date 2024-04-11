@@ -122,6 +122,7 @@ continuetheboulot:
   	LDI	0				; Load Accumulator Immediate
 	IOL	0x41			; Input/Output Long
 	IOL	0x41			; Input/Output Long
+	TML DELAY33MS
 	TL  readloop
     
 SECTION	DELAY33MS
