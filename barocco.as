@@ -23,6 +23,8 @@ SECTION BOOT
 	
 	T	test1			;0X000	; Transfer
 test1:
+	RF1
+	RF2
 	TL	opt__1
 test2:
 	LBL		0xC7		; BL<-0C7
@@ -52,4 +54,5 @@ SECTION opt__1
 	LBL		0x4A
  	LBL		0x3B
  	TL		test2
- 	
+ 
+ 
