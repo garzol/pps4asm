@@ -21,8 +21,10 @@
 	
 SECTION BOOT
 	
-	T	next			;0X000	; Transfer
-next:
+	T	test1			;0X000	; Transfer
+test1:
+	TL	opt__1
+test2:
 	LBL		0xC7		; BL<-0C7
 	LABL				; A <-#7	
 	CYS					; A <- SA(4:1) shift SA SA(12:9)<-A
@@ -49,5 +51,5 @@ SECTION opt__1
  	SKZ
 	LBL		0x4A
  	LBL		0x3B
- 	TL		0x0
+ 	TL		test2
  	
