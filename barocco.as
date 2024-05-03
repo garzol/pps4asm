@@ -27,15 +27,15 @@ test1:
 	RF2
 	TL	opt__1
 test2:
-	LBL		0xC7		; BL<-0C7
+	LBL		0xC8		; BL<-0C7
 	LABL				; A <-#7	
 	CYS					; A <- SA(4:1) shift SA SA(12:9)<-A
 	XABL                ; just to see
-	LBL		0xB8	    ; 
+	LBL		0xC7	    ; 
 	LABL				; A <-#8
 	CYS					; A <- SA(4:1) shift SA SA(12:9)<-A
 	XABL                ; just to see
-	LBL		0xB1	    ; 
+	LBL		0xCE	    ; 
 	LABL				; A <-#1
 	CYS					; A <- SA(4:1) shift SA SA(12:9)<-A
 	XABL                ; now SA is 187 or E78, we don't know
