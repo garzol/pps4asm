@@ -47,7 +47,7 @@ def entryPoint(fn):
     title =f";******************************************************************\n\
 ;********  {basefilename}  Block Memory .COE file  *********\n\
 ;********  {datetime.datetime.now()}  ********************\n\
-;********  !!BIT VERSION!!            ********************\n\
+;********  !!BIT VERSION!!      (no line comment)     ********************\n\
 ;******************************************************************\n"
     radix = "memory_initialization_radix=2;\n"
     head  = "memory_initialization_vector=\n"
@@ -69,9 +69,11 @@ def entryPoint(fn):
             for ri in range(4):  
                 if not first_item:
                     if ri == 0:
-                        f.write(",\t;word 0x%03X-%d\n" % (fb.tell()-2, 3))    
+                        #f.write(",\t;word 0x%03X-%d\n" % (fb.tell()-2, 3))    
+                        f.write(",\n")    
                     else:
-                        f.write(",\t;word 0x%03X-%d\n" % (fb.tell()-1, ri-1))    
+                        #f.write(",\t;word 0x%03X-%d\n" % (fb.tell()-1, ri-1))    
+                        f.write(",\n")    
 
                 if int.from_bytes(b, "big")&(1<<ri) != 0:
                     f.write("1")
@@ -80,7 +82,8 @@ def entryPoint(fn):
                     
                 first_item = False    
             b = fb.read(1)
-        f.write(" \t;word 0x%03X-3\n" % (fb.tell()-1))    
+        #f.write(" \t;word 0x%03X-3\n" % (fb.tell()-1))    
+        f.write(";\n")    
     f.close()     
     print ("coe base 2 done")
 
