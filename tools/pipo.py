@@ -2,11 +2,13 @@
 
 import sys
 
-for i in range(0,256):    
-    if i%16==0:
-        s1=i//16
-    else:
-        s1 = i&0x0F
+for i in range(16):
+    for j in range(16):
         
-    s = s1.to_bytes(1, "big")
-    sys.stdout.buffer.write(s)
+        if j==0 or j==1:
+            s1=i
+        else:
+            s1 = ((i+j)%16)//2
+        
+        s = s1.to_bytes(1, "big")
+        sys.stdout.buffer.write(s)
