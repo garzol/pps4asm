@@ -48,6 +48,7 @@ def entryPoint(fn):
 ;********  {basefilename}  Block Memory .COE file  *********\n\
 ;********  {datetime.datetime.now()}  ********************\n\
 ;********  !!BIT VERSION!!      (no line comment)     ********************\n\
+;********  !!CORRECTED VERSION!!      (read entire byte instead only half    ********************\n\
 ;******************************************************************\n"
     radix = "memory_initialization_radix=2;\n"
     head  = "memory_initialization_vector=\n"
@@ -66,7 +67,7 @@ def entryPoint(fn):
         first_item = True 
         while b != b"":
             # Do stuff with byte.
-            for ri in range(4):  
+            for ri in range(8):       #correcttion 24-06_24 from 4 to 8 !!!!!!!!!!!!
                 if not first_item:
                     if ri == 0:
                         #f.write(",\t;word 0x%03X-%d\n" % (fb.tell()-2, 3))    
