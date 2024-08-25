@@ -1,0 +1,27 @@
+2024-08-01
+
+from fa.c5 (from internet) is derived by double inversion (data+addresses) fa.bin
+
+fa.bin is pps4 instruction code.
+ 
+fa.bin is fair fight game prom 256 bytes to be mapped at 800..8FF
+
+cr.bin is 2KB 4x256b being game prom at 800 + 2KB of slightly modified A1762 (located at 0x400..0x7FF)
+
+from cr.bin are derived:
+crgame.bin is crazy race game prom 256 bytes to be mapped  at 800..8FF
+crA1762.bin is crazy race A1762 1KB to be mapped at 0x400..0x7FF
+
+differnces between original A1762 bin and crA1762...
+cmp -x  crA1762.bin A1762-13_1K.bin
+0000004e 59 50
+0000004f 80 0b
+000002fe 34 00
+
+44E	50	0B	TL	00B				; Transfer Long
+in the cr version its a TL 980
+
+
+6FD	57	00	TL	700				; Transfer Long
+
+in the cr version its a TL 734 => don't execute pio selftest (?)
