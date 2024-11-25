@@ -1,0 +1,376 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	</head>
+	<body>
+		<h1 id="pps4asm">pps4asm</h1>
+		<p>A simple assembler for PPS-4 systems
+			written in python</p>
+		<p>Yet Another Rockwell pps-4 Assembler "yarp_A"
+			<br/>
+		</p>
+		<p>Unique too, since any trace of such a tool is apparently long lost.</p>
+		<h3 id="usage">Usage</h3>
+		<p>
+			<code>python3 asmpps.py &lt;sourcefile.as&gt;</code>
+		</p>
+		<p>If everything goes well, you'll get a binary 
+			<code>sourcefile.bin</code> in the current directory
+			<br/>
+			This file is a raw binary containing your programm coded in PPS-4 and directly executable on a PPS-4 system.
+			<br/>
+		</p>
+		<p>Warnings and errors are printed to the standard output.</p>
+		<h3 id="syntax">Syntax</h3>
+		<h4 id="introduction">Introduction</h4>
+		<p>The list of all authorized mnemonics with their description can be found 
+			<a href="https://www.pps4.fr/dasm/instdoc/">here</a>
+			<br/>
+		</p>
+		<p>An asm source file is basically made of a series of mnemnic codes, such as follows:
+			<br/>
+		</p>
+		<pre><code>COMP				
+XS					
+CYS					; Cycle SA register and Accumulator
+LAX					; Load Accumulator from X Register
+CYS					; Cycle SA register and Accumulator
+LAX					; Load Accumulator from X Register
+ADI	0X1				
+LDI	0X7				
+LDI	0XA				
+CYS					; Cycle SA register and Accumulator
+RTN			</code></pre>
+		<p>You normally write one mnemonic per line, but multiple mnemonics on the same line is even permitted, even if it is not recommended.
+			<br/>
+		</p>
+		<pre><code>XAX CYS LDI 0XE RTN
+LAX LXA
+...
+</code></pre>
+		<h4 id="lowercase-uppercase">Lowercase/Uppercase</h4>
+		<p>There is 
+			<strong>no distinction</strong> between lowercase and uppercase characters
+			<br/>
+
+			<code>LDI</code> is equivalent to 
+			<code>ldi</code> or even 
+			<code>lDi</code>
+			<br/>
+		</p>
+		<h4 id="directives">Directives</h4>
+		<h5 id="section">SECTION</h5>
+		<p>Mnemonics are decoded and inserted in the binary file at the current marked address. Then, this marked address is incremented by 1 or 2, depending on the mnemonic size.
+			<br/>
+			All mnmonics are encoded on a single byte except for the following list, whose size is 2-byte:
+			<br/>
+		</p>
+		<blockquote>
+			<p>['LBL', 'TL', 'TML', 'IOL']</p>
+		</blockquote>
+		<p>To begin a routine at a specified address, use the directive 
+			<code>SECTION</code> like this:
+			<br/>
+
+			<code>SECTION 0X543</code>
+			<br/>
+		</p>
+		<p>Then, the next instruction will be implemented at 0x543
+			<br/>
+		</p>
+		<p>Any address can be specified in the range [0X000, 0XFFF]
+			<br/>
+		</p>
+		<p>A line containing the 
+			<code>section</code> directive does not support any other information, not even a comment.
+		</p>
+		<p>By default, if no 
+			<code>SECTION</code> is specified the first encountered instruction is encoded at address 0x000
+			<br/>
+			The maximum size of a pps-4 binary file is 0x1000 bytes (4KB)
+			<br/>
+		</p>
+		<blockquote>
+			<p>No verification of any sort is made. If not taken care of, overlaps are possible, so that code may be overwritten, leading to loss of data</p>
+			<p>:exclamation: Avoid writing code in range 0X0C0..0X0FF:
+				<br/>
+				In PPS-4 systems, 0X0C0..0X0CF is a reserved 16-byte indirection table for instruction 
+				<code>LB</code>
+				<br/>
+				In PPS-4 systems, 0X0D0..0X0FF is a reserved 32-byte indirection table for instruction 
+				<code>TM</code>
+			</p>
+		</blockquote>
+		<h5 id="labels">LABELs</h5>
+		<p>Labels and variables may be use for code clarity. For example, instead of writing:
+			<br/>
+		</p>
+		<pre><code>IOL	0XFE</code></pre>
+		<p>You might prefer:
+			<br/>
+		</p>
+		<pre><code>...
+KLA	EQX	0XFE
+...
+IOL KLA</code></pre>
+		<p>A variable is determined by its name, which can be any combination of any number of alphanumeric characters, and the underscore character '_'. Can't begin by a number.</p>
+		<h5 id="eqx">EQX</h5>
+		<p>Use 
+			<code>EQX</code> to assign a byte value to a variable.
+			<br/>
+		</p>
+		<pre><code>KLA	EQX	0XFE
+</code></pre>
+		<h5 id="ptr">PTR</h5>
+		<p>Use 
+			<code>PTR</code> to assign a label to a specific address (12 bits).
+			<br/>
+		</p>
+		<pre><code>EntryPoint	PTR	0x100
+</code></pre>
+		<p>Then 
+			<code>ENTRYPOINT</code> may be used to make reference to address 
+			<code>0X100</code> such as:
+			<br/>
+		</p>
+		<pre><code>EntryPoint  PTR 0x100
+
+SECTION EntryPoint
+
+T	0X101			; Transfer
+RF1				; Reset FF1
+RF2				; Reset FF2
+TL	EntryPoint		; Transfer Long</code></pre>
+		<h5 id="setb">SETB</h5>
+		<p>
+			<code>SETB</code> will set the byte at the current address to the specified value, and increment the address pointer. Variables can be used. Example:
+			<br/>
+		</p>
+		<pre><code>GARZOL		EQX		0X5A
+...
+SETB		0x01
+SETB		0X02
+...
+SETB		GARZOL</code></pre>
+		<h4 id="numeric-encoding">Numeric encoding</h4>
+		<p>For numeric values, 3 numeric encoding can be used, and mixed in the same source:
+			<br/>
+		</p>
+		<ol>
+			<li>Decimal. 
+				That's the ordinary way of writing number: 1, 2, 3, 192, 255, 654, etc... But not always very natural to programmers
+				<br/>
+			</li>
+			<li>Hexadecimal. 
+				Use the prefix '0X' to define hexadecimal numbers: 0X1, 0x02, 0x5A, 0X6F0, 0X800, etc... Note that 0X5 and 5 are exactly the same thing. They are interchangeable.
+				<br/>
+				The number of leading zeros is not significant. For example 0x001 does not necessarily mean we are dealing with a pointer. Depends on the context.
+				<br/>
+			</li>
+			<li>Binary.
+				Use the prefix '0B' to define binary numbers: 0B01, 0B1010, 0B111111000000, etc...</li>
+		</ol>
+		<p>Syntax such as C6, though unambiguous, is not allowed to avoid potential typos. Always prefix 0X required for hexas.
+			<br/>
+			Negative numbers such as -7 or -0X23 are not allowed.
+			<br/>
+			Highest usable hex is 0XFFF
+			<br/>
+			Highest usable bin is 0B111111111111 (12 ones)
+			<br/>
+		</p>
+		<p>Depending on the context, highest hex may be 0XFF, or 0XF (resp. bin 0B11111111 or 0B1111)</p>
+		<h4 id="jumps">Jumps</h4>
+		<p>To express a target address in a branch instruction (T, TL, TM, TML), 3 solutions are available:
+			<br/>
+		</p>
+		<ol>
+			<li>Absolute addressing by value
+				<br/>
+				With T, this is not very useful, because the programmers usually don't exactly know where they are nor what is the destination address value. They might break the rule of the page frontier without noticing it making the code inoperant. This situation would be signaled by the assembler, through an error message.
+				<br/>
+			</li>
+		</ol>
+		<pre><code>T	0X022				; Transfer
+EX	1					; Exchange Accumulator and Memory
+LD	0X2				; Load Accumulator from Memory
+EOR					; Logical Exclusive-OR
+SKZ					; Skip on Accumulator Zero
+T	0X026				; Transfer
+LD	0X2				; Load Accumulator from Memory
+LD	0X3				; Load Accumulator from Memory
+LD	0X2				; Load Accumulator from Memory
+EXD	1					; Exchange Accumulator and Memory and decrement BL
+T	0X00D				; Transfer
+TL	0X080				; Transfer Long
+</code></pre>
+		<p>For example it is impossible to say where is 0X022 actually... Nevertheless, that syntax might be useful for reassembling something coming from a disassembler for example.
+			<br/>
+		</p>
+		<ol>
+			<li>Use of labels
+				<br/>
+				That's the preferred way and most natural:
+				<br/>
+			</li>
+		</ol>
+		<pre><code>EntryPoint:
+    ...
+    T	label22
+    EX	1	
+    LD	2				
+    EOR	
+    SKZ				
+    T	label20
+    LD	2
+
+label20:
+    LD	3	
+    LD	2	
+label22:
+    EXD	1				
+    T	EntryPoint
+</code></pre>
+		<ol>
+			<li>Use of variables
+				<br/>
+				Variables can also be used:
+				<br/>
+			</li>
+		</ol>
+		<pre><code>
+EntryPoint	PTR	0x100
+
+    ...
+    T	label22
+    EX	1	
+    LD	2				
+    EOR	
+    SKZ				
+    LD	2	
+label22:
+    EXD	1				
+    T	EntryPoint		;will jump at address 0x100, provided that in the same page as here
+    TL	EntryPoint		;will jump at address 0x100,
+</code></pre>
+		<h4 id="specific-instruction-syntaxes">Specific instruction syntaxes.</h4>
+		<h5 id="tm">TM</h5>
+		<p>48 consecutive locations on ROM page 3 contains pointer data which identify subroutine entry addresses. These subroutine entry addresses are limited to pages 4 through 7. This TM instruction will save the address of the next ROM word in the SA register after loading the original contents of SA into SB. A transfer then occurs to one of the subroutine entry addresses. This instruction occupies one ROM word but takes two cycles for execution.
+			<br/>
+		</p>
+		<p>What is to be understood there, is that this instruction at assembly time potentially specifies 2 things:
+			<br/>
+		</p>
+		<ol>
+			<li>Specify a jump to target address </li>
+			<li>Write the target address in the table of indirection located at 0X0D0..0X0FF
+				<br/>
+			</li>
+		</ol>
+		<p>Depending oh the situation a programmer may want to do both 1. and 2. or only 1. leaving 2. because it's defined elsewhere in the process, and they don't want to overwrite data which is already there.</p>
+		<p>To handle both situations, there are 2 available syntaxes:
+			<br/>
+		</p>
+		<pre><code>TM	(0XD1)	(@&lt;=0X118)				; Transfer and Mark Indirect
+</code></pre>
+		<p>In this case, the assembler will encode the instruction in the binary file (0XD1), 
+			<strong>AND</strong> will write 0x18 at address 0XD1 (table feeding). There is no check that the location is free or not, etc...
+			<br/>
+		</p>
+		<p>The other accepted syntax is:
+			<br/>
+		</p>
+		<pre><code>TM	(0XD1)</code></pre>
+		<p>In this case, the assembler will encode the instruction in the binary file (0XD1), but won't write in the table</p>
+		<h5 id="lb">LB</h5>
+		<p>Sixteen consecutive locations on ROM page 3 (I2) contain data which can be loaded into the eight least significant bits of the B register by use of any LB instruction. The four most significant bits of B register will be loaded with zeroes. The contents of the SB register will be destroyed. This instruction takes two cycles to execute but occupies only one ROM word. (Automatic return)
+			<br/>
+		</p>
+		<p>What is to be understood there, is that this instruction at assembly time potentially specifies 2 things:
+			<br/>
+		</p>
+		<ol>
+			<li>Specify a load B register</li>
+			<li>Write the target value in the table of indirection located at 0X0C0..0X0CF
+				<br/>
+			</li>
+		</ol>
+		<p>Depending oh the situation a programmer may want to do both 1. and 2. or only 1. leaving 2. because it's defined elsewhere in the process, and they don't want to overwrite data which is already there.</p>
+		<p>To handle both situations, there are 2 available syntaxes:
+			<br/>
+		</p>
+		<pre><code>LB	(C4)	(B&lt;=041)
+</code></pre>
+		<p>In this case, the assembler will encode the instruction in the binary file (0XC4), 
+			<strong>AND</strong> will write |0x41| (complement) at address 0XC4 (table feeding). There is no check that the location was previously free or not, etc...
+			<br/>
+		</p>
+		<p>The other accepted syntax is:
+			<br/>
+		</p>
+		<pre><code>LB	(C4)</code></pre>
+		<p>In this case, the assembler will encode the instruction in the binary file (0XC4), but won't write in the table</p>
+		<h4 id="writing-comments-in-an-as-source-file">Writing comments in an as source file</h4>
+		<p>Comments can be inserted anywhere in your source (except on the same line as any directive). Just type a ";" and everything after it on this line will be ignored
+			<br/>
+			Example:
+			<br/>
+
+			<code>; you can write anything you want after a ';'</code>
+			<br/>
+
+			<code>; everything that follows, to the end of the line, will be ignored</code>
+		</p>
+		<h4 id="error-and-warning-messages">Error and warning messages</h4>
+		<h5 id="warnings">Warnings</h5>
+		<p>
+			<code>WARNING: PAGE LIMIT just after mnemonic LBL at line 1091 (address 0X4BE)</code>
+			<br/>
+		</p>
+		<p>In a PPS-4 system, the memory is arranged by pages of 64 bytes. The CPU executes each instruction and automatically increments the program counter, unless it is a branch instruction.
+			<br/>
+		</p>
+		<p>The program counter's size is 12-bit. It is actually made of the concatenation of 2 6-bit registers. Only the LSb is a real counter. The MSb is only updated through a TL, TM, or TML instruction. Thus, the counter only counts from 0 to 0x3F, and then roll over. As a consequence, a 2-byte instruction cannot straddle a page limit, and shall be considered as a programming error. This is the same with a 1-byte instruction at the last byte of a page. if such an instruction, such LAX for example, is implemented at a 0xX3F ROM location, then the next execution will occur at 0xX00, and not at 0xX40.
+			<br/>
+			Therefore, while such construction is valid, it is not likely to be a desired construction.
+			<br/>
+		</p>
+		<p>This is not necessarily a problem.
+			<br/>
+		</p>
+		<h5 id="errors">Errors</h5>
+		<h4 id="miscellaneous">Miscellaneous</h4>
+		<h5 id="inverting-instruction">Inverting instruction.</h5>
+		<p>Instruction ADI, LD, EX, EXD, LDI, LB and LBL have a numeric value coded as part of the instruction in the immediate field. This numeric value must be in the complementary form on the bus. It goes without saying that this assembler takes care of the inversion for you.</p>
+		<h4 id="questions-and-bugs">Questions and Bugs</h4>
+		<p>Please, ask questions or report bugs to &lt;bugs@pps4.fr&gt;</p>
+		<h4 id="reminder">Reminder</h4>
+		<blockquote>
+			<p>[!NOTE]
+				<br/>
+				Highlights information that users should take into account, even when skimming.
+			</p>
+		</blockquote>
+		<blockquote>
+			<p>[!TIP]
+				Optional information to help a user be more successful.</p>
+		</blockquote>
+		<blockquote>
+			<p>[!IMPORTANT]
+				<br/>
+				Crucial information necessary for users to succeed.
+			</p>
+		</blockquote>
+		<blockquote>
+			<p>[!WARNING]
+				<br/>
+				Critical content demanding immediate user attention due to potential risks.
+			</p>
+		</blockquote>
+		<blockquote>
+			<p>[!CAUTION]
+				Negative potential consequences of an action.</p>
+		</blockquote>
+	</body>
+</html>
